@@ -1,29 +1,29 @@
 #This code computes the efficient portfolio frontier, plots random generated portfolios to compare with the frontier,
 #find the minimum variance portfolio, the tangency portfolio and the efficient frontier. Protfolios are based on 3 assets
-#(MSFT, VBLTX and SBUX). Data acquired from Yahoo Finance
+#(MSFT, APPLE and AMAZON). Data acquired from Yahoo Finance
 
 library(tseries);
 library(zoo);
 library(quadprog);  
- 
-MSFT_prices <- get.hist.quote(instrument="msft", start="2000-01-01",end="2015-12-31", quote="AdjClose",provider="yahoo", origin="1970-01-01",compression="m", retclass="zoo", quiet=TRUE)
-VBLTX_prices <- get.hist.quote(instrument="vbltx", start="2000-01-01",end="2015-12-31", quote="AdjClose",provider="yahoo", origin="1970-01-01",compression="m", retclass="zoo", quiet=TRUE)
-SBUX_prices <- get.hist.quote(instrument="sbux", start="2000-01-01",end="2015-12-31", quote="AdjClose",provider="yahoo", origin="1970-01-01",compression="m", retclass="zoo", quiet=TRUE)
 
-index(SBUX_prices) <- as.yearmon(index(SBUX_prices))
+MSFT_prices <- get.hist.quote(instrument="msft", start="2000-01-01",end="2015-12-31", quote="AdjClose",provider="yahoo", origin="1970-01-01",compression="m", retclass="zoo", quiet=TRUE)
+APPLE_prices <- get.hist.quote(instrument="aapl", start="2000-01-01",end="2015-12-31", quote="AdjClose",provider="yahoo", origin="1970-01-01",compression="m", retclass="zoo", quiet=TRUE)
+AMAZON_prices <- get.hist.quote(instrument="amzn", start="2000-01-01",end="2015-12-31", quote="AdjClose",provider="yahoo", origin="1970-01-01",compression="m", retclass="zoo", quiet=TRUE)
+
+index(AMAZON_prices) <- as.yearmon(index(AMAZON_prices))
 index(MSFT_prices) <- as.yearmon(index(MSFT_prices))
-index(VBLTX_prices) <- as.yearmon(index(VBLTX_prices))
+index(APPLE_prices) <- as.yearmon(index(APPLE_prices))
 
 MSFT_sreturns <- diff(MSFT_prices)
-VBLTX_sreturns <- diff(VBLTX_prices)
-SBUX_sreturns <- diff(SBUX_prices)
+APPLE_sreturns <- diff(APPLE_prices)
+AMAZON_sreturns <- diff(AMAZON_prices)
 
 colnames(MSFT_sreturns) <- c("MSFT")
-colnames(VBLTX_sreturns) <- c("VBLTX")
-colnames(SBUX_sreturns) <- c("SBUX")
+colnames(APPLE_sreturns) <- c("APPLE")
+colnames(AMAZON_sreturns) <- c("AMAZON")
 
 
-returns <- merge(MSFT_sreturns,VBLTX_sreturns, SBUX_sreturns )
+returns <- merge(MSFT_sreturns,APPLE_sreturns, AMAZON_sreturns )
 
 #compute statistics
 
@@ -46,7 +46,7 @@ x <- b[1:3]
 
 #Plot the efficient frontier
 
-mu_val <- seq(from= 0, to=0.6, by=0.005)
+mu_val <- seq(from= -4, to=4, by=0.005)
 sd_val <- rep(0, times=length(mu_val))
 X <-matrix(0, ncol=3, nrow=length(mu_val))
 
@@ -115,7 +115,7 @@ for(i in 1:3){
 }
 
 
-plot(sd_val, mu_val, type="l", xlab="SD Portfolio", ylab="Expected Return Portfolio")
+plot(sd_val, mu_val, type="l", xlab="SD Portfolio", ylab="Expected Return Portfolio", xlim=c(2, 20), ylim=c(0,3.4))
 points(sd_ran, mu_ran, type="p", col="yellow")
 points(sd_min, mu_min, type="p", col="purple")
 points(sd_as, mu_as, type="p", col=rainbow(3))
@@ -135,29 +135,14 @@ sd_tan <- sqrt(t(x_tan)%*%sigma%*%x_tan)
 
 sh_tan <- (mu_tan-r_f)/sd_tan
 
-plot(sd_val[1:50], mu_val[1:50], type="l",xlab="SD Portfolio", ylab="Expected Return Portfolio")
-lines(sd_val[c],mu_val[c], type="l", col="red")
-abline(a=r_f, b=sh_tan, col="green")
-legend(x="topleft", legend=c("Portfolio Frontier", "Efficient Frontier with risk free"), col=c(1, "green"), lwd=1, cex=0.7)
-
-#Find the tangency portfolio with rf=mu_min
-r_f <- mu_min
-I <- rep(1, times=length(mu))
-
-x_tan <- (solve(sigma)%*%(mu-r_f*I))/(as.numeric(t(I)%*%solve(sigma)%*%(mu-r_f*I)))
-mu_tan <- t(x_tan)%*%mu
-sd_tan <- sqrt(t(x_tan)%*%sigma%*%x_tan)
-
-sh_tan <- (mu_tan-r_f)/sd_tan
-
-plot(sd_val[1:50], mu_val[1:50], type="l",  xlab="SD Portfolio", ylab="Expected Return Portfolio")
+plot(sd_val, mu_val, type="l",xlab="SD Portfolio", ylab="Expected Return Portfolio", xlim=c(2, 20), ylim=c(-3.4,3.4))
 lines(sd_val[c],mu_val[c], type="l", col="red")
 abline(a=r_f, b=sh_tan, col="green")
 legend(x="topleft", legend=c("Portfolio Frontier", "Efficient Frontier with risk free"), col=c(1, "green"), lwd=1, cex=0.7)
 
 #Find the tangency portfolio with rf>mu_min
 
-r_f <- 0.1
+r_f <- 0.15
 I <- rep(1, times=length(mu))
 
 x_tan <- (solve(sigma)%*%(mu-r_f*I))/(as.numeric(t(I)%*%solve(sigma)%*%(mu-r_f*I)))
@@ -166,7 +151,7 @@ sd_tan <- sqrt(t(x_tan)%*%sigma%*%x_tan)
 
 sh_tan <- (mu_tan-r_f)/sd_tan
 
-plot(sd_val[1:50], mu_val[1:50], type="l",  xlab="SD Portfolio", ylab="Expected Return Portfolio")
+plot(sd_val, mu_val, type="l",xlab="SD Portfolio", ylab="Expected Return Portfolio", xlim=c(2, 20), ylim=c(-3.4,3.4))
 lines(sd_val[c],mu_val[c], type="l", col="red")
 abline(a=r_f, b=sh_tan, col="green")
 legend(x="topleft", legend=c("Portfolio Frontier", "Efficient Frontier with risk free"), col=c(1, "green"), lwd=1, cex=0.7)
@@ -201,7 +186,7 @@ for(i in 1:length(mu_val_n)){
   sd_val_n[i] <- sqrt(2*solve.QP(sigma, d, t(A), b_n, meq=2, FALSE)$value)
 }
 
-plot(sd_val[1:50], mu_val[1:50], type="l",  xlab="SD Portfolio", ylab="Expected Return Portfolio")
+plot(sd_val, mu_val, type="l",  xlab="SD Portfolio", ylab="Expected Return Portfolio", xlim=c(2, 20), ylim=c(0,3.4))
 lines(sd_val_n, mu_val_n, type="l", col="orange")
 legend(x="topleft", legend=c("Portfolio Frontier", "Portfolio Frontier no short sales"), col=c(1, "orange"), lwd=1, cex=0.7)
 
